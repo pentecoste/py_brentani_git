@@ -308,7 +308,7 @@ async def add(client, message):
         except Exception as e:
             print("Cannot load JSON file data.json\n\n" + str(e))
             return
-        data["elements"][str(int(list(data["elements"])[-1])+1)] = {"is_done": False, "is_private": True if message_data[4].lower() == "private" else False, "name": message_data[2], "price":float(message_data[5]), "quantity":int(message_data[1]), "user_id":user_id if message_data[3].lower()=="me" else 0}
+        data["elements"][str(int(list(data["elements"])[-1])+1) if len(data["elements"]) else 0] = {"is_done": False, "is_private": True if message_data[4].lower() == "private" else False, "name": message_data[2], "price":float(message_data[5]), "quantity":int(message_data[1]), "user_id":user_id if message_data[3].lower()=="me" else 0}
         with open('data.json', 'w') as outfile:
             try:
                 json.dump(data, outfile, sort_keys=True, indent=4)
