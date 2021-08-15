@@ -115,25 +115,17 @@ async def lista(client, callback_query):
         callback_data = callback_query.data.split(" ")
         search_id = int(callback_data[1])
         if len(callback_data) > 2:
-            toggle_id = int(callback_data[2])
-            was_done = None
-            toggled_user = None
-            price = None
-            name = None
-            quantity = None
-            for e in data["elements"]:
-                if e["id"] == toggle_id:
-                    was_done = e["is_done"]
-                    e["is_done"] = not e["is_done"]
-                    toggled_user = e["user_id"]
-                    price = e["price"]
-                    name = e["name"]
-                    quantity = e["quantity"]
+            toggle_id = callback_data[2]
+            was_done = data["elements"][toggle_id]["is_done"]
+            data["elements"][toggle_id]["is_done"] = not data["elements"][toggle_id]["is_done"]
+            toggled_user = data["elements"][toggle_id]["user_id"]
+            price = data["elements"][toggle_id]["price"]
+            name = data["elements"][toggle_id]["name"]
+            quantity = data["elements"][toggle_id]["quantity"]
             if not was_done:
-                if user_id != toggled_user:
-                    if not (str(user_id) in data["credits"] and str(toggled_user) in data["credits"][str(user_id)]):
-                        data["credits"][str(user_id)] = {str(toggled_user):{"value":0.0}}
-                    data["credits"][str(user_id)][str(toggled_user)]["value"] += price
+                if not (str(user_id) in data["credits"] and str(toggled_user) in data["credits"][str(user_id)]):
+                    data["credits"][str(user_id)][str(toggled_user)]["value"] = 0.0
+                data["credits"][str(user_id)][str(toggled_user)]["value"] += price
                 if not toggled_user:
                     for id_ in data["users"]:
                         if int(id_) != user_id:
@@ -153,7 +145,7 @@ async def lista(client, callback_query):
                     print("Unable to write JSON file data.json\n\n" + str(e))
                     return
         elements_filtered = [] 
-        for e in data["elements"]:
+        for e in data["elements"].values():
             if search_id == -1:
                 if e["user_id"] == user_id or e["user_id"] == 0:
                     elements_filtered.append(e)
@@ -161,11 +153,11 @@ async def lista(client, callback_query):
                 if e["user_id"] == search_id:
                     elements_filtered.append(e)
             else:
-                if e["user_id"] == search_id and (not e["is_private"] or not search_id):
+                if e["user_id"] == search_id and (not e["is_private"] or not e["search_id"]):
                     elements_filtered.append(e)
         elements_processed = []
         for e in elements_filtered:
-            cb_data = "lista " + str(search_id)+ " " + str(e["id"])
+            cb_data = "lista " + str(search_id)+ " " + [k for k, v in data["elements"].items() if v == e][0]
             elements_processed.append([InlineKeyboardButton(("\U0001F7E2" if e["is_done"] else "\U0001F534") + " " + e["name"] + " x" + str(e["quantity"]) + ("\U0001F7E2" if e["is_done"] else "\U0001F534"), callback_data = cb_data), InlineKeyboardButton("€ " + str(e["price"]), callback_data = cb_data)])
         elements_processed.append([InlineKeyboardButton("\U0001F519 Back", callback_data = "menu_lista")])
         username = ""
@@ -231,20 +223,20 @@ async def todo(client, callback_query):
                 except Exception as e:
                     print("Unable to write JSON file data.json\n\n" + str(e))
                     return
-        elements_filtered = [] 
-        for e in data["elements"]:
+        elements_filtered = []
+        for e in data["elements"].values():
             if search_id == -1:
-                if e["user_id"] == user_id or e["user_id"] == 0 and not e["is_done"]:
+                if (e["user_id"] == user_id or e["user_id"] == 0) and not e["is_done"]:
                     elements_filtered.append(e)
             elif search_id == user_id:
                 if e["user_id"] == search_id and not e["is_done"]:
                     elements_filtered.append(e)
             else:
-                if e["user_id"] == search_id and ((not e["is_private"] or not search_id ) and not e["is_done"]):
+                if e["user_id"] == int(search_id) and (not e["is_private"] or not e["search_id"]) and not e["is_done"]:
                     elements_filtered.append(e)
         elements_processed = []
         for e in elements_filtered:
-            cb_data = "todo " + str(search_id)+ " " + str(e["id"])
+            cb_data = "todo " + str(search_id)+ " " + [k for k, v in data["elements"].items() if v == e][0]
             elements_processed.append([InlineKeyboardButton("\U0001F534 " + e["name"] + " x" + str(e["quantity"]) + "\U0001F534", callback_data = cb_data), InlineKeyboardButton("€ " + str(e["price"]), callback_data = cb_data)])
         elements_processed.append([InlineKeyboardButton("\U0001F519 Back", callback_data = "menu_todo")])
         username = ""
@@ -316,20 +308,7 @@ async def add(client, message):
         except Exception as e:
             print("Cannot load JSON file data.json\n\n" + str(e))
             return
-        with open("count.json") as openfile:
-            try:
-                count_json = openfile.read()
-                count = json.loads(count_json)
-            except Exception as e:
-                print("Cannot load JSON file count.json\n\n" + str(e))
-                return
-            data["elements"].append({"id":count[0], "is_done": False, "is_private": True if message_data[4].lower() == "private" else False, "name": message_data[2], "price":message_data[5], "quantity":message_data[1], "user_id":user_id if message_data[3].lower()=="me" else 0})
-            count[0] += 1
-            with open("count.json", "w") as outfile:
-                try:
-                    json.dump(count, outfile)
-                except Exception as e:
-                    print("Unable to write JSON file count.json\n\n" + str(e))
+        data["elements"][str(int(list(data["elements"])[-1])+1)] = {"is_done": False, "is_private": True if message_data[4].lower() == "private" else False, "name": message_data[2], "price":float(message_data[5]), "quantity":int(message_data[1]), "user_id":user_id if message_data[3].lower()=="me" else 0}
         with open('data.json', 'w') as outfile:
             try:
                 json.dump(data, outfile, sort_keys=True, indent=4)
@@ -360,13 +339,14 @@ async def delete(client, message):
         except Exception as e:
             print("Cannot load JSON file data.json\n\n" + str(e))
             return
-        for e in data["elements"]:
+        for i, e in data["elements"].items():
             if e["name"].lower() == message_data[2].lower() and e["quantity"] == int(message_data[1]) and (e["user_id"] == user_id or not e["user_id"]):
-                data["elements"].remove(e)
+                del data["elements"][i]
                 try:
                     await client.send_message(chat_id, "Elemento eliminato con successo dalla lista!")
                 except FloodWait:
                     return
+                break
         with open('data.json', 'w') as outfile:
             try:
                 json.dump(data, outfile, sort_keys=True, indent=4)
@@ -392,19 +372,24 @@ async def reset(client, message):
         except Exception as e:
             print("Cannot load JSON file data.json\n\n" + str(e))
             return
-    for credit in data["credits"]:
-        if credit["from_user"] == int(message_data[1]) and credit["to_user"] == int(message_data[2]):
-            credit["value"] = 0.0
-            try:
-                await client.send_message(chat_id, "Credito resettato con successo!")
-            except FloodWait:
-                return
-        with open('data.json', 'w') as outfile:
-            try:
-                json.dump(data, outfile, sort_keys=True, indent=4)
-            except Exception as e:
-                print("Unable to write JSON file data.json\n\n" + str(e))
-                return
+    try:
+        credit[message_data[1]][message_data[2]]["value"] = 0.0
+    except KeyError:
+        try:
+            await client.send_message(chat_id, "Errore! Forse hai inserito un id che non esiste")
+        except FloodWait:
+            return
+        return
+    try:
+        await client.send_message(chat_id, "Credito resettato con successo!")
+    except FloodWait:
+        return
+    with open('data.json', 'w') as outfile:
+        try:
+            json.dump(data, outfile, sort_keys=True, indent=4)
+        except Exception as e:
+            print("Unable to write JSON file data.json\n\n" + str(e))
+            return
 
 # Gestisce il comando /add_user per aggiungere un utente
 @Client.on_message(filters.command(["add_user"]))
