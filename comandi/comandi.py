@@ -124,7 +124,7 @@ async def lista(client, callback_query):
             quantity = data["elements"][toggle_id]["quantity"]
             if not was_done:
                 if not (str(user_id) in data["credits"] and str(toggled_user) in data["credits"][str(user_id)]):
-                    data["credits"][str(user_id)][str(toggled_user)]["value"] = 0.0
+                    data["credits"][str(user_id)] = {str(toggled_user):{"value":0.0}}
                 data["credits"][str(user_id)][str(toggled_user)]["value"] += price
                 if not toggled_user:
                     for id_ in data["users"]:
@@ -135,7 +135,7 @@ async def lista(client, callback_query):
                                 return
                 elif toggled_user != user_id:
                     try:
-                        await client.send_message(toggled_user, data["users"][id_] + " gà crompà el to " + name + " x" + str(quantity) + ". Ringrassia!") 
+                        await client.send_message(toggled_user, data["users"][user_id] + " gà crompà el to " + name + " x" + str(quantity) + ". Ringrassia!") 
                     except FloodWait as e:
                         return
             with open('data.json', 'w') as outfile:
@@ -147,13 +147,13 @@ async def lista(client, callback_query):
         elements_filtered = [] 
         for e in data["elements"].values():
             if search_id == -1:
-                if e["user_id"] == user_id or e["user_id"] == 0:
+                if e["user_id"] == user_id or not e["user_id"]:
                     elements_filtered.append(e)
             elif search_id == user_id:
                 if e["user_id"] == search_id:
                     elements_filtered.append(e)
             else:
-                if e["user_id"] == search_id and (not e["is_private"] or not e["search_id"]):
+                if e["user_id"] == search_id and (not e["is_private"] or not search_id):
                     elements_filtered.append(e)
         elements_processed = []
         for e in elements_filtered:
@@ -203,7 +203,7 @@ async def todo(client, callback_query):
             quantity = data["elements"][toggle_id]["quantity"]
             if user_id != toggled_user:
                 if not (str(user_id) in data["credits"] and str(toggled_user) in data["credits"][str(user_id)]):
-                    data["credits"][str(user_id)][str(toggled_user)]["value"] = 0.0
+                    data["credits"][str(user_id)] = {str(toggled_user):{"value":0.0}}
                 data["credits"][str(user_id)][str(toggled_user)]["value"] += price
             if not toggled_user:
                 for id_ in data["users"]:
@@ -214,7 +214,7 @@ async def todo(client, callback_query):
                             return
             elif toggled_user != user_id:
                 try:
-                    await client.send_message(toggled_user, data["users"][id_] + " gà crompà el to " + name + " x" + str(quantity) + ". Ringrassia!") 
+                    await client.send_message(toggled_user, data["users"][user_id] + " gà crompà el to " + name + " x" + str(quantity) + ". Ringrassia!") 
                 except FloodWait as e:
                     return
             with open('data.json', 'w') as outfile:
@@ -226,13 +226,13 @@ async def todo(client, callback_query):
         elements_filtered = []
         for e in data["elements"].values():
             if search_id == -1:
-                if (e["user_id"] == user_id or e["user_id"] == 0) and not e["is_done"]:
+                if (e["user_id"] == user_id or not e["user_id"]) and not e["is_done"]:
                     elements_filtered.append(e)
             elif search_id == user_id:
                 if e["user_id"] == search_id and not e["is_done"]:
                     elements_filtered.append(e)
             else:
-                if e["user_id"] == int(search_id) and (not e["is_private"] or not e["search_id"]) and not e["is_done"]:
+                if e["user_id"] == search_id and (not e["is_private"] or not search_id) and not e["is_done"]:
                     elements_filtered.append(e)
         elements_processed = []
         for e in elements_filtered:
@@ -277,7 +277,7 @@ async def contabilita(client, callback_query):
             pass
         final_string = "\U0001F4B8 **CONTABILITÀ DI " + data["users"][str(search_id)].upper() + "** \U0001F4B8"
         for (user, value) in credits_filtered.items():
-            final_string += "\n\nCredito " + (data["users"][int(user)] if int(user) else "Comune") + ": € " + str(value)
+            final_string += "\n\nCredito " + (data["users"][user] if int(user) else "Comune") + ": € " + str(value)
         try:
             await client.edit_message_text(chat_id, message_id, final_string, reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton("\U0001F519 Back", callback_data="menu_contabilita")]]))
         except (BadRequest, FloodWait) as e:
@@ -376,7 +376,7 @@ async def reset(client, message):
         credit[message_data[1]][message_data[2]]["value"] = 0.0
     except KeyError:
         try:
-            await client.send_message(chat_id, "Errore! Forse hai inserito un id che non esiste")
+            await client.send_message(chat_id, "Impossibile resettare il credito. Forse hai inserito un id che non esiste")
         except FloodWait:
             return
         return
@@ -453,7 +453,13 @@ async def delete_user(client, message):
         except Exception as e:
             print("Cannot load JSON file data.json\n\n" + str(e))
             return
-        del data["users"][message_data[1]]
+        try:
+            del data["users"][message_data[1]]
+        except KeyError:
+            try:
+                await client.send_message(chat_id, "Impossibile eliminare l'utente: id non esistente")
+            except FloodWait:
+                return
         with open('data.json', 'w') as outfile:
             try:
                 json.dump(data, outfile, sort_keys=True, indent=4)
