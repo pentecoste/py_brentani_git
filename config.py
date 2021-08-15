@@ -10,7 +10,7 @@ help_message = """Hai bisogno di aiuto?
 
 /delete Quantità NomeElemento\n- Elimina gli elementi con un certo nome dalla lista\nExample: /delete 2 Carciofo (la quantità è da specificare per ridurre le ambiguità nel caso si volessero tenere due elementi con nomi uguali ma quantità diverse)
 
-/reset Utente Credito\n- Resetta il credito di un utente nei confronti di un altro utente\nExample: /reset 109239450 0 (0 = Utente Comune, per ottenere l'id degli utenti registrati fare /get_ids)
+/reset Utente Credito\n- Resetta il credito di un utente nei confronti di un altro utente\nExample: /reset 109239450 0 (0 = Utente Comune)\nExample: /reset 204924391 958885421
 
 /get_ids\n- Ottieni gli id di tutti gli utenti registrati (sono molto utili)
 
