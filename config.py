@@ -6,9 +6,9 @@ help_message = """Hai bisogno di aiuto?
 
 /start\n- Accedi alle funzioni del bot
 
-/add Quantita NomeElemento Utente Private Prezzo\n- Aggiungi un elemento alla lista\nExample: /add 3 Maccheroni me private 5.49\nExample: /add 2 Albicocche all public 1.20
+/add Utente Private Prezzo Quantita NomeElemento\n- Aggiungi un elemento alla lista\nExample: /add me private 5.49 3 Maccheroni\nExample: /add all public 1.20 2 Albicocche Marce
 
-/delete Quantità NomeElemento\n- Elimina gli elementi con un certo nome dalla lista\nExample: /delete 2 Carciofo (la quantità è da specificare per ridurre le ambiguità nel caso si volessero tenere due elementi con nomi uguali ma quantità diverse)
+/delete Quantità NomeElemento\n- Elimina gli elementi con un certo nome dalla lista\nExample: /delete 2 Carciofo OGM Del Brenta(la quantità è da specificare per ridurre le ambiguità nel caso si volessero tenere due elementi con nomi uguali ma quantità diverse)
 
 /reset Utente Credito\n- Resetta il credito di un utente nei confronti di un altro utente\nExample: /reset 109239450 0 (0 = Utente Comune)\nExample: /reset 204924391 958885421
 
