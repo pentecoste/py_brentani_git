@@ -145,11 +145,16 @@ async def lista(client, callback_query):
                 except Exception as e:
                     print("Unable to write JSON file data.json\n\n" + str(e))
                     return
-        elements_filtered = [] 
-        for e in data["elements"].values():
+        elements_filtered = []
+        last_index = 0
+        for e in sorted(data["elements"].values(), key = lambda k: k["name"]):
             if search_id == -1:
                 if e["user_id"] == user_id or not e["user_id"]:
-                    elements_filtered.append(e)
+                    if e["user_id"]:
+                        elements_filtered.append(e)
+                    else:
+                        elements_filtered.insert(last_index, e)
+                        last_index += 1
             elif search_id == user_id:
                 if e["user_id"] == search_id:
                     elements_filtered.append(e)
@@ -159,7 +164,7 @@ async def lista(client, callback_query):
         elements_processed = []
         for e in elements_filtered:
             cb_data = "lista " + str(search_id)+ " " + [k for k, v in data["elements"].items() if v == e][0]
-            elements_processed.append([InlineKeyboardButton(("\U0001F7E2" if e["is_done"] else "\U0001F534") + " " + e["name"] + " x" + str(e["quantity"]) + ("\U0001F7E2" if e["is_done"] else "\U0001F534"), callback_data = cb_data), InlineKeyboardButton("€ " + str(e["price"]), callback_data = cb_data)])
+            elements_processed.append([InlineKeyboardButton(("(C)    " if not e["user_id"] else "") + ("\U0001F7E2" if e["is_done"] else "\U0001F534") + " " + e["name"] + " x" + str(e["quantity"]) + (" \U0001F7E2 " if e["is_done"] else " \U0001F534") + "    € " + str(e["price"]), callback_data = cb_data)])
         elements_processed.append([InlineKeyboardButton("\U0001F519 Back", callback_data = "menu_lista")])
         username = ""
         if not search_id:
@@ -225,10 +230,14 @@ async def todo(client, callback_query):
                     print("Unable to write JSON file data.json\n\n" + str(e))
                     return
         elements_filtered = []
-        for e in data["elements"].values():
+        for e in sorted(data["elements"].values(), key = lambda k: k["name"]):
             if search_id == -1:
                 if (e["user_id"] == user_id or not e["user_id"]) and not e["is_done"]:
-                    elements_filtered.append(e)
+                    if e["user_id"]:
+                        elements_filtered.append(e)
+                    else:
+                        elements_filtered.insert(last_index, e)
+                        last_index += 1
             elif search_id == user_id:
                 if e["user_id"] == search_id and not e["is_done"]:
                     elements_filtered.append(e)
@@ -238,7 +247,7 @@ async def todo(client, callback_query):
         elements_processed = []
         for e in elements_filtered:
             cb_data = "todo " + str(search_id)+ " " + [k for k, v in data["elements"].items() if v == e][0]
-            elements_processed.append([InlineKeyboardButton("\U0001F534 " + e["name"] + " x" + str(e["quantity"]) + "\U0001F534", callback_data = cb_data), InlineKeyboardButton("€ " + str(e["price"]), callback_data = cb_data)])
+            elements_processed.append([InlineKeyboardButton(("(C)    " if not e["user_id"] else "") + "\U0001F534 " + e["name"] + " x" + str(e["quantity"]) + " \U0001F534    € " + str(e["price"]), callback_data = cb_data)])
         elements_processed.append([InlineKeyboardButton("\U0001F519 Back", callback_data = "menu_todo")])
         username = ""
         if not search_id:
@@ -290,7 +299,7 @@ async def add(client, message):
     chat_id = message.chat.id
     message_data = message.text.split(" ")
     user_id = message.from_user.id
-    if len(message_data) != 6:
+    if len(message_data) < 6:
         try:
             await client.send_message(chat_id, "Sintassi del comando errata! Usa /help per una spiegazione del comando")
         except FloodWait:
@@ -309,7 +318,10 @@ async def add(client, message):
         except Exception as e:
             print("Cannot load JSON file data.json\n\n" + str(e))
             return
-        data["elements"][str(int(list(data["elements"])[-1])+1) if len(data["elements"]) else 0] = {"is_done": False, "is_private": True if message_data[4].lower() == "private" else False, "name": message_data[2], "price":float(message_data[5]), "quantity":int(message_data[1]), "user_id":user_id if message_data[3].lower()=="me" else 0}
+        name = ""
+        for n in message_data[5:]:
+            name += n + " "
+        data["elements"][str(int(list(data["elements"])[-1])+1) if len(data["elements"]) else 0] = {"is_done": False, "is_private": True if message_data[2].lower() == "private" else False, "name": name[:-1], "price":float(message_data[3]), "quantity":int(message_data[4]), "user_id":user_id if message_data[1].lower()=="me" else 0}
         with open('data.json', 'w') as outfile:
             try:
                 json.dump(data, outfile, sort_keys=True, indent=4)
@@ -327,7 +339,7 @@ async def delete(client, message):
     chat_id = message.chat.id
     message_data = message.text.split(" ")
     user_id = message.from_user.id
-    if len(message_data) != 3:
+    if len(message_data) < 3:
         await client.send_message(chat_id, "Sintassi del comando errata! Usa /help per una spiegazione del comando")
         return
     if not (user_id in config.admin_users):
@@ -340,8 +352,11 @@ async def delete(client, message):
         except Exception as e:
             print("Cannot load JSON file data.json\n\n" + str(e))
             return
+        name = ""
+        for n in message_data[2:]:
+            name += n + " " 
         for i, e in data["elements"].items():
-            if e["name"].lower() == message_data[2].lower() and e["quantity"] == int(message_data[1]) and (e["user_id"] == user_id or not e["user_id"]):
+            if e["name"].lower() == name[:-1].lower() and e["quantity"] == int(message_data[1]) and (e["user_id"] == user_id or not e["user_id"]):
                 del data["elements"][i]
                 try:
                     await client.send_message(chat_id, "Elemento eliminato con successo dalla lista!")
