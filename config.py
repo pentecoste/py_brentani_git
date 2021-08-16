@@ -12,6 +12,8 @@ help_message = """Hai bisogno di aiuto?
 
 /reset Utente Credito\n- Resetta il credito di un utente nei confronti di un altro utente\nExample: /reset 109239450 0 (0 = Utente Comune)\nExample: /reset 204924391 958885421
 
+/set Utente Credito Valore\n- Imposta ad un certo valore il credito di un utente nei confronti di un altro utente\nExample: /set 109239450 0 10.0 (0 = Utente Comune)
+
 /get_ids\n- Ottieni gli id di tutti gli utenti registrati (sono molto utili)
 
 /get_id\n- Ottieni il tuo id (utile ad esempio per capire che id devi mettere nell'add_user)
