@@ -1,5 +1,5 @@
 # py_brentani_git
-Bot per la lista della spesa non ben ottimizzato ma funzionante (proprio come piace al creatore).\
+Bot per la lista della spesa forse non del tutto ottimizzato ma di sicuro funzionante (proprio come piace al creatore).\
 La licenza è la GPL perchè la normale benzina mi faceva schifo.\
 Il GPL è trasportato con autocisterna su strada, ferrocisterna su ferrovia e gassiera via mare.
 
