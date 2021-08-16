@@ -122,10 +122,11 @@ async def lista(client, callback_query):
             price = data["elements"][toggle_id]["price"]
             name = data["elements"][toggle_id]["name"]
             quantity = data["elements"][toggle_id]["quantity"]
-            if not was_done:
-                if not (str(user_id) in data["credits"] and str(toggled_user) in data["credits"][str(user_id)]):
-                    data["credits"][str(user_id)] = {str(toggled_user):{"value":0.0}}
-                data["credits"][str(user_id)][str(toggled_user)]["value"] += price
+            if not was_done:    
+                if toggled_user != user_id:
+                    if not (str(user_id) in data["credits"] and str(toggled_user) in data["credits"][str(user_id)]):
+                        data["credits"][str(user_id)] = {str(toggled_user):{"value":0.0}}
+                    data["credits"][str(user_id)][str(toggled_user)]["value"] += price
                 if not toggled_user:
                     for id_ in data["users"]:
                         if int(id_) != user_id:
@@ -135,7 +136,7 @@ async def lista(client, callback_query):
                                 return
                 elif toggled_user != user_id:
                     try:
-                        await client.send_message(toggled_user, data["users"][user_id] + " gà crompà el to " + name + " x" + str(quantity) + ". Ringrassia!") 
+                        await client.send_message(toggled_user, data["users"][str(user_id)] + " gà crompà el to " + name + " x" + str(quantity) + ". Ringrassia!") 
                     except FloodWait as e:
                         return
             with open('data.json', 'w') as outfile:
@@ -214,7 +215,7 @@ async def todo(client, callback_query):
                             return
             elif toggled_user != user_id:
                 try:
-                    await client.send_message(toggled_user, data["users"][user_id] + " gà crompà el to " + name + " x" + str(quantity) + ". Ringrassia!") 
+                    await client.send_message(toggled_user, data["users"][str(user_id)] + " gà crompà el to " + name + " x" + str(quantity) + ". Ringrassia!") 
                 except FloodWait as e:
                     return
             with open('data.json', 'w') as outfile:
@@ -389,6 +390,50 @@ async def reset(client, message):
             json.dump(data, outfile, sort_keys=True, indent=4)
         except Exception as e:
             print("Unable to write JSON file data.json\n\n" + str(e))
+            return
+
+# Gestisce il comando /set per impostare il credito nei confronti di un utente
+@Client.on_message(filters.command(["set"]))
+async def set(client, message):
+    chat_id = message.chat.id
+    message_data = message.text.split(" ")
+    user_id = message.from_user.id
+    if len(message_data) != 4:
+        try:
+            await client.send_message(chat_id, "Sintassi del comando errata! Usa /help per una spiegazione del comando")
+        except FloodWait:
+            return
+        return
+    if not (user_id in config.admin_users):
+        try:
+            await client.send_message(chat_id, "Non hai i privilegi necessari per eseguire questo comando!")
+        except FloodWait:
+            return
+        return
+    with open("data.json") as openfile:
+        try:
+            data_json = openfile.read()
+            data = json.loads(data_json)
+        except Exception as e:
+            print("Cannot load JSON file data.json\n\n" + str(e))
+            return
+        try:
+            data["credits"][message_data[1]][message_data[2]]["value"] = float(message_data[3])
+        except KeyError:
+            try:
+                await client.send_message(chat_id, "Impossibile resettare il credito. Forse hai inserito un id che non esiste")
+            except FloodWait:
+                return
+            return
+        with open('data.json', 'w') as outfile:
+            try:
+                json.dump(data, outfile, sort_keys=True, indent=4)
+            except Exception as e:
+                print("Unable to write JSON file data.json\n\n" + str(e))
+                return
+        try:
+            await client.send_message(chat_id, "Credito impostato con successo!")
+        except FloodWait:
             return
 
 # Gestisce il comando /add_user per aggiungere un utente
