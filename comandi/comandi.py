@@ -125,13 +125,13 @@ async def lista(client, callback_query):
             if not was_done:    
                 if toggled_user != user_id:
                     if not (str(user_id) in data["credits"] and str(toggled_user) in data["credits"][str(user_id)]):
-                        data["credits"][str(user_id)] = {str(toggled_user):{"value":0.0}}
+                        data["credits"][str(user_id)][str(toggled_user)] = {"value":0.0}
                     data["credits"][str(user_id)][str(toggled_user)]["value"] += price
                 if not toggled_user:
                     for id_ in data["users"]:
                         if int(id_) != user_id:
                             try:
-                                await client.send_message(int(id_), data["users"][id_] + " gà crompà el " + name + " x" + str(quantity) + " (Comune). Ringrassia!") 
+                                await client.send_message(int(id_), data["users"][str(user_id)] + " gà crompà el " + name + " x" + str(quantity) + " (Comune). Ringrassia!") 
                             except FloodWait as e:
                                 return
                 elif toggled_user != user_id:
@@ -215,7 +215,7 @@ async def todo(client, callback_query):
                 for id_ in data["users"]:
                     if int(id_) != user_id:
                         try:
-                            await client.send_message(int(id_), data["users"][id_] + " gà crompà el " + name + " x" + str(quantity) + " (Comune). Ringrassia!") 
+                            await client.send_message(int(id_), data["users"][str(user_id)] + " gà crompà el " + name + " x" + str(quantity) + " (Comune). Ringrassia!") 
                         except FloodWait as e:
                             return
             elif toggled_user != user_id:
@@ -230,6 +230,7 @@ async def todo(client, callback_query):
                     print("Unable to write JSON file data.json\n\n" + str(e))
                     return
         elements_filtered = []
+        last_index = 0
         for e in sorted(data["elements"].values(), key = lambda k: k["name"]):
             if search_id == -1:
                 if (e["user_id"] == user_id or not e["user_id"]) and not e["is_done"]:
