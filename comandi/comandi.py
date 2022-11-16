@@ -180,7 +180,8 @@ async def lista(client, callback_query):
         elements_processed = []
         for e in elements_filtered:
             cb_data = "lista " + str(search_id)+ " " + [k for k, v in data["elements"].items() if v == e][0]
-            elements_processed.append([InlineKeyboardButton(("(C)    " if not e["user_id"] else "") + ("\U0001F7E2" if e["is_done"] else "\U0001F534") + " " + e["name"] + " x" + str(e["quantity"]) + (" \U0001F7E2 " if e["is_done"] else " \U0001F534"), callback_data = cb_data), InlineKeyboardButton("-", callback_data = cb_data + " -1"), InlineKeyboardButton("+", callback_data = cb_data + " +1")])
+            elements_processed.append([InlineKeyboardButton(("(C)    " if not e["user_id"] else "") + ("\U0001F7E2" if e["is_done"] else "\U0001F534") + " " + e["name"] + " x" + str(e["quantity"]) + (" \U0001F7E2 " if e["is_done"] else " \U0001F534"), callback_data = cb_data)])
+            elements_processed.append([InlineKeyboardButton("-", callback_data = cb_data + " -1"), InlineKeyboardButton("+", callback_data = cb_data + " +1")])
         elements_processed.append([InlineKeyboardButton("\U0001F519 Back", callback_data = "menu_lista")])
         username = ""
         if not search_id:
