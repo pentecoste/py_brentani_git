@@ -6,6 +6,9 @@ from pyrogram.errors import BadRequest, FloodWait
 import time
 from datetime import datetime
 
+N_LIST = 25
+N_TODO = 95
+
 # Gestisce il comando /start
 @Client.on_message(filters.command(["start"]))
 async def start(client, message):
@@ -44,7 +47,7 @@ async def menu_lista(client, callback_query):
         except Exception as e:
             print("Cannot load JSON file data.json\n\n" + str(e))
             return
-        buttons = [[InlineKeyboardButton("Mia & Comune", callback_data = "lista -1")],[InlineKeyboardButton("Comune",callback_data = "lista 0 1")]]
+        buttons = [[InlineKeyboardButton("Mia & Comune", callback_data = "lista -1 1")],[InlineKeyboardButton("Comune",callback_data = "lista 0 1")]]
         for id_ in data["users"]:
             buttons.append([InlineKeyboardButton(data["users"][id_], callback_data = "lista " + id_ + " 1")])
         buttons.append([InlineKeyboardButton("Mia & Comune (Da fare)", callback_data = "lst_todo -1 1")])
@@ -180,14 +183,14 @@ async def lista(client, callback_query):
                     elements_filtered.append(e)
         elements_processed = []
         for i, e in enumerate(elements_filtered):
-            if i < (page_id-1)*25:
+            if i < (page_id-1)*N_LIST:
                 continue
-            if i >= page_id*25:
+            if i >= page_id*N_LIST:
                 break
-            cb_data = "lista " + str(search_id)+ " " + [k for k, v in data["elements"].items() if v == e][0]
+            cb_data = "lista " + str(search_id)+ " " + str(page_id) + " " + [k for k, v in data["elements"].items() if v == e][0]
             elements_processed.append([InlineKeyboardButton(("(C)    " if not e["user_id"] else "") + ("\U0001F7E2" if e["is_done"] else "\U0001F534") + " " + e["name"] + " x" + str(e["quantity"]) + (" \U0001F7E2 " if e["is_done"] else " \U0001F534"), callback_data = cb_data)])
             elements_processed.append([InlineKeyboardButton("-", callback_data = cb_data + " -1"), InlineKeyboardButton("+", callback_data = cb_data + " +1")])
-        elements_processed.append([InlineKeyboardButton("<-", callback_data = "lista " + str(search_id) + str(page_id - 1 if page_id > 1 else page_id), InlineKeyboardButton("->", callback_data = "lista " + str(search_id) + str(page_id if page_id > int((len(elements_filtered)-1)/25) else page_id + 1))])
+        elements_processed.append([InlineKeyboardButton("<-", callback_data = "lista " + str(search_id) + " " + str(page_id - 1 if page_id > 1 else page_id)), InlineKeyboardButton("->", callback_data = "lista " + str(search_id) + " " + str(page_id if page_id > int((len(elements_filtered)-1)/N_LIST) else page_id + 1))])
         elements_processed.append([InlineKeyboardButton("\U0001F519 Back", callback_data = "menu_lista")])
         username = ""
         if not search_id:
@@ -222,8 +225,9 @@ async def lst_todo(client, callback_query):
             return
         callback_data = callback_query.data.split(" ")
         search_id = int(callback_data[1])
-        if len(callback_data) > 2:
-            toggle_id = callback_data[2]
+        page_id = int(callback_data[2])
+        if len(callback_data) > 3:
+            toggle_id = callback_data[3]
             if (not data["elements"][toggle_id]["is_done"]) and data["elements"][toggle_id]["expires"]:
                 data["warnings"][toggle_id] = time.time() + (data["elements"][toggle_id]["expires"]*24*3600)
             #was_done = data["elements"][toggle_id]["is_done"]
@@ -270,9 +274,14 @@ async def lst_todo(client, callback_query):
                 if e["user_id"] == search_id and (not e["is_private"] or not search_id) and not e["is_done"]:
                     elements_filtered.append(e)
         elements_processed = []
-        for e in elements_filtered:
-            cb_data = "lst_todo " + str(search_id)+ " " + [k for k, v in data["elements"].items() if v == e][0]
+        for i, e in enumerate(elements_filtered):
+            if i < (page_id-1)*N_TODO:
+                continue
+            if i >= page_id*N_TODO:
+                break
+            cb_data = "lst_todo " + str(search_id)+ " " + str(page_id) + " " + [k for k, v in data["elements"].items() if v == e][0]
             elements_processed.append([InlineKeyboardButton(("(C)    " if not e["user_id"] else "") + "\U0001F534 " + e["name"] + " x" + str(e["quantity"]) + " \U0001F534", callback_data = cb_data)])
+        elements_processed.append([InlineKeyboardButton("<-", callback_data = "lst_todo " + str(search_id) + " " + str(page_id - 1 if page_id > 1 else page_id)), InlineKeyboardButton("->", callback_data = "lst_todo " + str(search_id) + " " + str(page_id if page_id > int((len(elements_filtered)-1)/N_TODO) else page_id + 1))])
         elements_processed.append([InlineKeyboardButton("\U0001F519 Back", callback_data = "menu_lista")])
         username = ""
         if not search_id:
