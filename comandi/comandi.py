@@ -120,7 +120,7 @@ async def lista(client, callback_query):
             return
         callback_data = callback_query.data.split(" ")
         search_id = int(callback_data[1])
-        if len(callback_data) > 2:
+        if len(callback_data) == 3:
             toggle_id = callback_data[2]
             if (not data["elements"][toggle_id]["is_done"]) and data["elements"][toggle_id]["expires"]:
                 data["warnings"][toggle_id] = time.time() + (data["elements"][toggle_id]["expires"]*24*3600)
@@ -151,6 +151,16 @@ async def lista(client, callback_query):
                 except Exception as e:
                     print("Unable to write JSON file data.json\n\n" + str(e))
                     return
+        if len(callback_data) == 4:
+            toggle_id = callback_data[2]
+            operand = callback_data[3]
+            data["elements"][toggle_id]["quantity"] += int(operand)
+            with open('data.json', 'w') as outfile:
+                try:
+                    json.dump(data, outfile, sort_keys=True, indent=4)
+                except Exception as e:
+                    print("Unable to write JSON file data.json\n\n" + str(e))
+                    return
         elements_filtered = []
         last_index = 0
         for e in sorted(data["elements"].values(), key = lambda k: k["name"]):
@@ -170,7 +180,7 @@ async def lista(client, callback_query):
         elements_processed = []
         for e in elements_filtered:
             cb_data = "lista " + str(search_id)+ " " + [k for k, v in data["elements"].items() if v == e][0]
-            elements_processed.append([InlineKeyboardButton(("(C)    " if not e["user_id"] else "") + ("\U0001F7E2" if e["is_done"] else "\U0001F534") + " " + e["name"] + " x" + str(e["quantity"]) + (" \U0001F7E2 " if e["is_done"] else " \U0001F534"), callback_data = cb_data)])
+            elements_processed.append([InlineKeyboardButton(("(C)    " if not e["user_id"] else "") + ("\U0001F7E2" if e["is_done"] else "\U0001F534") + " " + e["name"] + " x" + str(e["quantity"]) + (" \U0001F7E2 " if e["is_done"] else " \U0001F534"), callback_data = cb_data), InlineKeyboardButton("-", callback_data = cb_data + " -1"), InlineKeyboardButton("+", callback_data = cb_data + " +1")])
         elements_processed.append([InlineKeyboardButton("\U0001F519 Back", callback_data = "menu_lista")])
         username = ""
         if not search_id:
